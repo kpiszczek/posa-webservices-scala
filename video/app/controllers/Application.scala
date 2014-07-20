@@ -7,8 +7,12 @@ import play.api.mvc._
 
 import models._
 
-case class MissingParameterException(param: String) extends Exception(param)
-case class BadParameterException(param: String) extends Exception(param)
+case class MissingParameterException(param: String) extends Exception(param) {
+  override def toString = s"missing paramter: ${param}"
+}
+case class BadParameterException(param: String) extends Exception(param) {
+  override def toString = s"malformed paramter: ${param}"
+}
 
 object Application extends Controller {
   val VIDEO_ADDED = "Video added."
