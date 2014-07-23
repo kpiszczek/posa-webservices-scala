@@ -32,11 +32,11 @@ class ApplicationSpec extends Specification {
       val url = "hello.video.example.com"
       val page = route(
         FakeRequest(POST, "/")
-        .withHeaders(("Content-Type", "application/x-www-form-urlencoded"))
-        .withFormUrlEncodedBody(
-          ("name", name),
-          ("url", url),
-          ("duration" , "123456"))).get
+          .withHeaders(("Content-Type", "application/x-www-form-urlencoded"))
+          .withFormUrlEncodedBody(
+            ("name", name),
+            ("url", url),
+            ("duration", "123456"))).get
 
       status(page) must equalTo(OK)
       contentType(page) must beSome.which(_ == "text/plain")
@@ -49,12 +49,12 @@ class ApplicationSpec extends Specification {
     }
 
     "return bad request when missing paramter" in new WithApplication {
-       val page = route(
+      val page = route(
         FakeRequest(POST, "/")
-        .withHeaders(("Content-Type", "application/x-www-form-urlencoded"))
-        .withFormUrlEncodedBody(
-          ("name", "hello"),
-          ("url", "hello.video.example.com"))).get
+          .withHeaders(("Content-Type", "application/x-www-form-urlencoded"))
+          .withFormUrlEncodedBody(
+            ("name", "hello"),
+            ("url", "hello.video.example.com"))).get
 
       status(page) must equalTo(BAD_REQUEST)
       contentType(page) must beSome.which(_ == "text/plain")
@@ -64,11 +64,11 @@ class ApplicationSpec extends Specification {
     "return bad request when malformed paramter" in new WithApplication {
       val page = route(
         FakeRequest(POST, "/")
-        .withHeaders(("Content-Type", "application/x-www-form-urlencoded"))
-        .withFormUrlEncodedBody(
-          ("name", "hello"),
-          ("url", "hello.video.example.com"),
-          ("duration", "asdf"))).get
+          .withHeaders(("Content-Type", "application/x-www-form-urlencoded"))
+          .withFormUrlEncodedBody(
+            ("name", "hello"),
+            ("url", "hello.video.example.com"),
+            ("duration", "asdf"))).get
 
       status(page) must equalTo(BAD_REQUEST)
       contentType(page) must beSome.which(_ == "text/plain")

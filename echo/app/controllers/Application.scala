@@ -7,7 +7,7 @@ import play.api.mvc.BodyParsers.parse
 object Application extends Controller {
 
   def index = Action {
-  	Ok("")
+    Ok("")
   }
 
   def echo = Action(parse.urlFormEncoded) { implicit request =>

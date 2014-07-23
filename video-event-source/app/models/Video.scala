@@ -17,15 +17,17 @@ class VideoStore extends PersistentActor {
   def persistenceId: String = "video-store"
 
   val receiveRecover: Receive = {
-  	case video: Video => { state = video :: state }
+    case video: Video => { state = video :: state }
   }
 
   val receiveCommand: Receive = {
-  	case AddVideo(v) => persist(v){ v => {
-  	  state = v :: state 
-  	  sender() ! Stored 
-  	}}
-  	case Videos => sender() ! state
-  	case "snap" => saveSnapshot(state)
+    case AddVideo(v) => persist(v) { v =>
+      {
+        state = v :: state
+        sender() ! Stored
+      }
+    }
+    case Videos => sender() ! state
+    case "snap" => saveSnapshot(state)
   }
 }

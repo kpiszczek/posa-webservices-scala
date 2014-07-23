@@ -52,7 +52,6 @@ object Application extends Controller {
     }
   }
 
-  
   private def getParam(params: Map[String, Seq[String]], name: String): Try[String] = {
     val s = params.get(name).flatMap(_.headOption)
     s match {
@@ -61,16 +60,16 @@ object Application extends Controller {
     }
   }
 
-  private def checkParam[A](params: Map[String, Seq[String]], name: String, validator: String => Try[A]) = 
+  private def checkParam[A](params: Map[String, Seq[String]], name: String, validator: String => Try[A]) =
     getParam(params, name).flatMap(validator)
 
-  private def checkLength(name: String, minimalLength: Int): String => Try[String] = (s: String) => 
+  private def checkLength(name: String, minimalLength: Int): String => Try[String] = (s: String) =>
     if (s.length > minimalLength) Success(s)
     else Failure(TooShortException(name, minimalLength))
 
   private def checkNumber(name: String): String => Try[Long] = (s: String) =>
     try { Success(s.toLong) }
-    catch { case _: Throwable => Failure(NotANumberException(name))}
+    catch { case _: Throwable => Failure(NotANumberException(name)) }
 
   private def getErrorMessage(params: Seq[Try[Any]]): String = {
     params.map(_ match {
