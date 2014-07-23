@@ -21,7 +21,8 @@ class ApplicationSpec extends Specification {
 
     "echo nothing when msg parameter is missing" in new WithApplication{
       val home = route(FakeRequest(GET, "/")
-        .withHeaders(("Content-Type", "application/x-www-form-urlencoded"))).get
+        .withHeaders(("Content-Type", "application/x-www-form-urlencoded"))
+        .withFormUrlEncodedBody(("wrong msg", "hello"))).get
 
       status(home) must equalTo(OK)
       contentType(home) must beSome.which(_ == "text/plain")
@@ -30,7 +31,7 @@ class ApplicationSpec extends Specification {
 
     "echo given message" in new WithApplication{
       val home = route(
-        FakeRequest(POST, "/")
+        FakeRequest(GET, "/")
         .withHeaders(("Content-Type", "application/x-www-form-urlencoded"))
         .withFormUrlEncodedBody(
           ("msg", "hello"))).get
