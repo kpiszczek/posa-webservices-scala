@@ -19,12 +19,11 @@ class ApplicationSpec extends Specification {
       route(FakeRequest(GET, "/boum")) must beNone
     }
 
-    "render empty list of videos" in new WithApplication {
+    "respond with plain-text" in new WithApplication {
       val home = route(FakeRequest(GET, "/")).get
 
       status(home) must equalTo(OK)
       contentType(home) must beSome.which(_ == "text/plain")
-      contentAsString(home).length must beEqualTo(0)
     }
 
     "add video to list" in new WithApplication {
@@ -49,7 +48,7 @@ class ApplicationSpec extends Specification {
     }
 
     "return bad request when missing paramter" in new WithApplication {
-       val page = route(
+      val page = route(
         FakeRequest(POST, "/")
         .withHeaders(("Content-Type", "application/x-www-form-urlencoded"))
         .withFormUrlEncodedBody(

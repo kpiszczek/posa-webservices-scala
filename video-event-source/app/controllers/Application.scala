@@ -1,9 +1,16 @@
 package controllers
 
 import scala.util.{ Try, Success, Failure }
+import scala.concurrent._
+import scala.concurrent.duration._
+
+import akka.actor._
+import akka.util.Timeout
+import akka.pattern.ask
 
 import play.api._
 import play.api.mvc._
+import play.api.libs.concurrent.Akka.system
 import play.api.mvc.BodyParsers.parse
 
 import models._
@@ -19,15 +26,22 @@ case class NotANumberException(param: String) extends Exception(param) {
 }
 
 object Application extends Controller {
+  import play.api.Play.current
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   val VIDEO_ADDED = "Video added."
 
-  var videos: List[Video] = Nil
+  implicit val timeout: Timeout = Timeout(5.seconds)
 
-  def get = Action {
-    Ok(videos.map((v: Video) => s"${v.name} : ${v.url}").mkString("\n"))
+  def videoStore = system.actorSelection("user/video-store")
+
+  def get = Action.async {
+    val fVideos = videoStore ? Videos 
+    fVideos.mapTo[List[Video]].map(videos => 
+      Ok(videos.map((v: Video) => s"${v.name} : ${v.url}").mkString("\n")))
   }
 
-  def post = Action(parse.urlFormEncoded) { implicit request =>
+  def post = Action.async(parse.urlFormEncoded) { implicit request =>
     val body = request.body
     val tryName = checkParam(body, "name", checkLength("name", 1))
     val tryUrl = checkParam(body, "url", checkLength("url", 10))
@@ -44,15 +58,18 @@ object Application extends Controller {
 
     result match {
       case Success(video) => {
-        videos = video :: videos
-        Ok(VIDEO_ADDED)
+        val fStored = videoStore ? AddVideo(video)
+        fStored.map {
+          case Stored => Ok(VIDEO_ADDED)
+          case _ => InternalServerError("Server error: unable to save video to store")
+        }
       }
-      case _: Failure[_] =>
+      case _: Failure[_] => Future {
         BadRequest(getErrorMessage(List(tryName, tryUrl, tryDuration)))
+      }
     }
   }
 
-  
   private def getParam(params: Map[String, Seq[String]], name: String): Try[String] = {
     val s = params.get(name).flatMap(_.headOption)
     s match {
