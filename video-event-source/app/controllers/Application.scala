@@ -10,7 +10,6 @@ import akka.pattern.ask
 
 import play.api._
 import play.api.mvc._
-import play.api.libs.concurrent.Akka.system
 import play.api.mvc.BodyParsers.parse
 
 import models._
@@ -28,6 +27,7 @@ case class NotANumberException(param: String) extends Exception(param) {
 object Application extends Controller {
   // akka boilerplate - start
   import play.api.Play.current
+  import play.api.libs.concurrent.Akka.system
   import scala.concurrent.ExecutionContext.Implicits.global
   implicit val timeout: Timeout = Timeout(5.seconds)
   // akka boilerplate - end
@@ -74,6 +74,8 @@ object Application extends Controller {
           case _ => InternalServerError("Server error: unable to save video to store")
         }
       case _: Failure[_] => Future {
+        // if any of paramters has was missing or faild validation we're
+        // returning BadRequest result with body containing list of errors
         BadRequest(getErrorMessage(List(tryName, tryUrl, tryDuration)))
       }
     }

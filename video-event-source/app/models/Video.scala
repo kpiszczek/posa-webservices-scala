@@ -21,18 +21,29 @@ class VideoStore extends PersistentActor {
   def persistenceId: String = "video-store"
 
   val receiveRecover: Receive = {
-    case video: Video => { state.videos = video :: state.videos }
+  	// state can be restored either by replaying 
+  	// note that in recover state we're receiving events stored
+  	// via 'persist' method NOT the original commands
+    case video: Video => state.videos = video :: state.videos
+    // Also we can restore state in one go if we're provided with a snapshot of a state
     case SnapshotOffer(_, snapshot: StoreState) => state = snapshot
   }
 
   val receiveCommand: Receive = {
-    case AddVideo(v) => persist(v) { v =>
-      {
-        state.videos = v :: state.videos
+    case AddVideo(video) => persist(video) { v =>
+      {	
+      	// adding video to store
+        state.videos = video :: state.videos
+        // after successful video storage 
+        // we're passing Stored message back to sender
         sender() ! Stored
       }
     }
+    // when asked we're sending back list of videos from store
     case Videos => sender() ! state.videos
+    // saving snapshot of current state
+    // now akka can remove previous events from journal/db
+    // and still be able restore current state successfully
     case "snap" => saveSnapshot(state)
   }
 }
