@@ -23,7 +23,7 @@ class VideoStore extends PersistentActor {
   val receiveRecover: Receive = {
   	// state can be restored either by replaying 
   	// note that in recover state we're receiving events stored
-  	// via 'persist' method NOT the original commands
+  	// using 'persist' method NOT the original commands
     case video: Video => state.videos = video :: state.videos
     // Also we can restore state in one go if we're provided with a snapshot of a state
     case SnapshotOffer(_, snapshot: StoreState) => state = snapshot
