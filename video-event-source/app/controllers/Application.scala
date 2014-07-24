@@ -26,18 +26,18 @@ case class NotANumberException(param: String) extends Exception(param) {
 }
 
 object Application extends Controller {
+  // akka boilerplate - start
   import play.api.Play.current
   import scala.concurrent.ExecutionContext.Implicits.global
+  implicit val timeout: Timeout = Timeout(5.seconds)
+  // akka boilerplate - end
 
   val VIDEO_ADDED = "Video added."
-
-  implicit val timeout: Timeout = Timeout(5.seconds)
 
   def videoStore = system.actorSelection("user/video-store")
 
   def get = Action.async {
-    val fVideos = videoStore ? Videos 
-    fVideos.mapTo[List[Video]].map(videos => 
+    (videoStore ? Videos).mapTo[List[Video]].map(videos =>
       Ok(videos.map((v: Video) => s"${v.name} : ${v.url}").mkString("\n")))
   }
 
@@ -57,13 +57,11 @@ object Application extends Controller {
     }
 
     result match {
-      case Success(video) => {
-        val fStored = videoStore ? AddVideo(video)
-        fStored.map {
+      case Success(video) => 
+        (videoStore ? AddVideo(video)).map {
           case Stored => Ok(VIDEO_ADDED)
           case _ => InternalServerError("Server error: unable to save video to store")
         }
-      }
       case _: Failure[_] => Future {
         BadRequest(getErrorMessage(List(tryName, tryUrl, tryDuration)))
       }
@@ -78,16 +76,16 @@ object Application extends Controller {
     }
   }
 
-  private def checkParam[A](params: Map[String, Seq[String]], name: String, validator: String => Try[A]) = 
+  private def checkParam[A](params: Map[String, Seq[String]], name: String, validator: String => Try[A]) =
     getParam(params, name).flatMap(validator)
 
-  private def checkLength(name: String, minimalLength: Int): String => Try[String] = (s: String) => 
-    if (s.length > minimalLength) Success(s)
+  private def checkLength(name: String, minimalLength: Int): String => Try[String] = (s: String) =>
+    if (s.length >= minimalLength) Success(s)
     else Failure(TooShortException(name, minimalLength))
 
   private def checkNumber(name: String): String => Try[Long] = (s: String) =>
     try { Success(s.toLong) }
-    catch { case _: Throwable => Failure(NotANumberException(name))}
+    catch { case _: Throwable => Failure(NotANumberException(name)) }
 
   private def getErrorMessage(params: Seq[Try[Any]]): String = {
     params.map(_ match {

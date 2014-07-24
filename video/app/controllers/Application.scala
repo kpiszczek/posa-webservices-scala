@@ -64,7 +64,7 @@ object Application extends Controller {
     getParam(params, name).flatMap(validator)
 
   private def checkLength(name: String, minimalLength: Int): String => Try[String] = (s: String) =>
-    if (s.length > minimalLength) Success(s)
+    if (s.length >= minimalLength) Success(s)
     else Failure(TooShortException(name, minimalLength))
 
   private def checkNumber(name: String): String => Try[Long] = (s: String) =>
