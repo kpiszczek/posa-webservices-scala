@@ -34,9 +34,16 @@ object Application extends Controller {
 
   val VIDEO_ADDED = "Video added."
 
+  // we're selecting 'video-store' actor (which has been created in Global.scala) 
+  // from global akka system
   def videoStore = system.actorSelection("user/video-store")
 
+  // When we're communicating with actor system all operations are asynchronous
+  // We must provide a Future[Result] instead of pure Result
   def get = Action.async {
+    // We are using "ask pattern" to receive list of videos from video-store.
+    // The "?" method sends message to an actor and returs Future of response.
+    // Message channels are untyped so we need to map response to expected type. 
     (videoStore ? Videos).mapTo[List[Video]].map(videos =>
       Ok(videos.map((v: Video) => s"${v.name} : ${v.url}").mkString("\n")))
   }
@@ -58,8 +65,12 @@ object Application extends Controller {
 
     result match {
       case Success(video) => 
+        // Once again we're using 'ask' pattern.
+        // We're sending AddVideo command to videoStore and mapping 
+        // Future of confirmation to Store event
         (videoStore ? AddVideo(video)).map {
           case Stored => Ok(VIDEO_ADDED)
+          // in case when actor is not Responding with expected message we assume that something went terribly wrong
           case _ => InternalServerError("Server error: unable to save video to store")
         }
       case _: Failure[_] => Future {
